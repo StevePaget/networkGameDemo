@@ -659,12 +659,17 @@ def clock():
 
 
 def tick(fps):
-    for event in pygame.event.get():
-        if (event.type == pygame.KEYDOWN and event.key == keydict["esc"]) or event.type == pygame.QUIT:
-            pygame.quit()
-            sys.exit()
-    gameClock.tick(fps)
-    return gameClock.get_fps()
+    try:
+        for event in pygame.event.get():
+            if (event.type == pygame.KEYDOWN and event.key == keydict["esc"]) or event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+        gameClock.tick(fps)
+        return gameClock.get_fps()
+    except:
+        print("quit")
+        pygame.quit()
+        sys.exit()
 
 
 def showLabel(labelName):

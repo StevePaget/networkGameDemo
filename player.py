@@ -11,15 +11,25 @@ showLabel(playerLabel)
 infoLabel = makeLabel("Waiting for your turn",42,10,750,"white")
 showLabel(infoLabel)
 
+class GameState:
+    def __init__(self):
+        self.board = [[None,None,None],
+                 [None,None,None],
+                 [None,None,None]]
+        self.currentPlayerNum = 0
+        self.running = [True,True]
+        self.turntaken = False
+        self.winner = None
+
 class Game:
     def __init__(self):
         self.board = [[None,None,None],
                  [None,None,None],
                  [None,None,None]]
-        #  0=wait,  1=playing, 2=updateScreen, 9=done
+        #  0=wait,  1=playing, 2=start of turn, 9=done
         self.status = 2
         self.running = True
-        self.connect()
+        self.connect() # connects to network and fires up houseKeeping thread
         self.displayBoard()
         self.playGame()
 
@@ -31,7 +41,8 @@ class Game:
             if self.status == 1:
                 self.playerTurn()
             elif self.status == -1:
-                print("Ended")
+                print("Shutdown signal received")
+                pygame.quit()
                 sys.exit()
             tick(100)
 
@@ -70,7 +81,6 @@ class Game:
         while not validMoveMade and self.status != -1:
             # keep checking the mouse to see where they click
             if mousePressed():
-                print("start")
                 xpos = (mouseX()-50)//200
                 ypos = (mouseY()-50)//200
                 if xpos < 0 or xpos > 2 or ypos < 0 or ypos > 2:
@@ -88,10 +98,8 @@ class Game:
                         updateDisplay()
                 # wait until mouse released
                 while mousePressed():
-                    print("pausing")
                     updateDisplay()
                     tick(50)
-                print("released")
             tick(100)
 
     def connect(self):
@@ -104,6 +112,7 @@ class Game:
             # receive game state
             receivedState = self.n.receive()
             if receivedState.currentPlayerNum == -1:
+                # shutdown signal has been sent
                 self.status = -1
                 break
             if receivedState.winner is not None:

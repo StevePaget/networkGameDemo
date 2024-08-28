@@ -2,7 +2,7 @@ import socket
 import pickle, time, random
 import threading
 
-class Game:
+class GameState:
     def __init__(self):
         self.board = [[None,None,None],
                  [None,None,None],
@@ -80,11 +80,10 @@ while True:
     # this keeps running, waiting for 2 players to join
     # when the game ends, it repeats
     print("New Game")
-    game = Game()
+    game = GameState()
     players = [0,1]
     random.shuffle(players) # randomise who gets x or o
     s.listen(2)
-    threads = []
     print("Waiting for a connection, Server Started")
     for i in range(2):
         pnum = players[i]
@@ -92,7 +91,7 @@ while True:
         print("Connected to:", addr)
         conn.send(str.encode(str(pnum)))  # send them their player number, 0 or 1
         # now start a thread which will handle this player's network connection
-        threads.append(threading.Thread(target=threaded_client, args = (conn, game,pnum)).start())
+        threading.Thread(target=threaded_client, args = (conn, game,pnum)).start()
     print("both players connected")
 
     while game is not None and game.running == [True, True]:
