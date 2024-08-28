@@ -31,7 +31,8 @@ class Game:
             if self.status == 1:
                 self.playerTurn()
             elif self.status == -1:
-                break
+                print("Ended")
+                sys.exit()
             tick(100)
 
 
@@ -66,7 +67,7 @@ class Game:
         changeLabel(infoLabel, "It's your turn - click a square")
         updateDisplay()
         validMoveMade = False
-        while not validMoveMade:
+        while not validMoveMade and self.status != -1:
             # keep checking the mouse to see where they click
             if mousePressed():
                 print("start")
@@ -102,8 +103,9 @@ class Game:
         while True:
             # receive game state
             receivedState = self.n.receive()
-            print(self.board, receivedState.board)
-            print(self.thisPlayerNum, receivedState.currentPlayerNum, self.status, receivedState.winner)
+            if receivedState.currentPlayerNum == -1:
+                self.status = -1
+                break
             if receivedState.winner is not None:
                 if receivedState.winner == self.thisPlayerNum:
                     changeLabel(infoLabel, "You win!")

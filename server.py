@@ -38,7 +38,6 @@ def threaded_client(conn, game,pnum):
                             print("move made")
                             # update local game board
                             game.board = receivedgame.board[:]
-                            print(game.board)
                             winner = checkWin(game.board)
                             if winner is not None:
                                 print(winner, "wins")
@@ -56,9 +55,10 @@ def threaded_client(conn, game,pnum):
                 print(e)
                 print("connection failed")
                 game.running[pnum] = False
-    print("Lost connection")
-    game.running[pnum] = False
-    conn.close()
+    print("Ended", pnum)
+    if game.running[pnum]:
+        game.currentPlayerNum = -1               
+        conn.send(pickle.dumps(game))    
 
 def checkWin(board):
     spaces = 0
@@ -77,24 +77,28 @@ def checkWin(board):
     return None
 
 while True:
+    # this keeps running, waiting for 2 players to join
+    # when the game ends, it repeats
     print("New Game")
     game = Game()
     players = [0,1]
-    random.shuffle(players)
+    random.shuffle(players) # randomise who gets x or o
     s.listen(2)
-    connections = []
     threads = []
     print("Waiting for a connection, Server Started")
     for i in range(2):
         pnum = players[i]
         conn, addr = s.accept()
-        connections.append(conn)
         print("Connected to:", addr)
-        conn.send(str.encode(str(pnum)))
+        conn.send(str.encode(str(pnum)))  # send them their player number, 0 or 1
+        # now start a thread which will handle this player's network connection
         threads.append(threading.Thread(target=threaded_client, args = (conn, game,pnum)).start())
     print("both players connected")
 
-    while game is not None and game.running != [False, False]:
+    while game is not None and game.running == [True, True]:
+        # keep going while the players are still playing
         print("Game running")
+    print("player disconnected")          
+            
 
 print("Ended")
