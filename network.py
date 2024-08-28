@@ -9,14 +9,15 @@ class Network:
         self.port = 5555
         self.addr = (self.server, self.port)
         self.p = self.connect()
+        print("Player", self.p)
 
     def getP(self):
-        return self.p
+        return int(self.p)
 
     def connect(self):
         try:
             self.client.connect(self.addr)
-            return self.client.recv(2048*4).decode()
+            return self.client.recv(100).decode()
         except:
             pass
 
