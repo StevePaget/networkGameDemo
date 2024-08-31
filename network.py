@@ -30,6 +30,6 @@ class Network:
 
     def receive(self):
         try:
-            return pickle.loads(self.client.recv(2048*4))
+            return pickle.loads(self.client.recv(256))
         except socket.error as e:
             print(e)

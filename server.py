@@ -1,5 +1,5 @@
 import socket
-import pickle, time, random
+import pickle, random, sys
 import threading
 
 class GameState:
@@ -24,20 +24,29 @@ except socket.error as e:
     str(e)
 
 def threaded_client(conn, game,pnum):
+    # This procedure keeps running as long as both players are still running.
+    # There are two copies of this thread running simultaneously.
+    # Each thread handles the communication with a single player.
     while game.running == [True,True]:
             try:
+                # first, we send the current game state to the player client
                 conn.send(pickle.dumps(game))
-                receivedgame = pickle.loads(conn.recv(2048*4))
+                # we receive back a response from the player client
+                receivedgame = pickle.loads(conn.recv(256))
+                # if we got back a None object, they must have disconnected
                 if not receivedgame:
                     print("Disconnected")
                     game.running[pnum] = False
                 else:
+                    # we check the currentPlayerNum attribute of the game object
                     if game.currentPlayerNum == pnum: # it's this player
-                        if receivedgame.turntaken: # turn taken
-                            # check for win
-                            print("move made")
-                            # update local game board
+                        # We check to see if the player client has completed their turn
+                        # and they're ready to pass to the next player
+                        if receivedgame.turntaken: 
+                            # Copy the board state in the received gamestate
+                            # and update local game board.
                             game.board = receivedgame.board[:]
+                            # check to see if either player has won the game
                             winner = checkWin(game.board)
                             if winner is not None:
                                 print(winner, "wins")
@@ -45,33 +54,45 @@ def threaded_client(conn, game,pnum):
                                 game.running[pnum] = False
                                 conn.send(pickle.dumps(game))
                             else:
-                                # swap players
+                                # There's no winner, so swap players
                                 game.currentPlayerNum = (game.currentPlayerNum+1)%2
                     elif game.winner is not None:
+                        # In this case, it is not this player's turn
+                        # but either someone has won the game or it's a draw
                         game.running[pnum] = False
+                        # we will send them the updated gamestate to confirm the
+                        # end of the game
                         conn.send(pickle.dumps(game))
 
-            except Exception as e:
+            except Exception as e: # Probably some sort of network error
                 print(e)
                 print("connection failed")
                 game.running[pnum] = False
     print("Ended", pnum)
+    # The next section occurs if this player is still connected, but the other player
+    # has disconnected. In which case we tell this player to shut down mid-game
     if game.running[pnum]:
         game.currentPlayerNum = -1               
         conn.send(pickle.dumps(game))    
 
 def checkWin(board):
+    # This is specific to noughts and crosses.
+    # The server determines if someone has won the game
     spaces = 0
     for i in range(3):
-        if board[i][0] == board[i][1] and board[i][1] == board[i][2]:
+        #check the three columns for matching symbols
+        if board[i][0] is not None and board[i][0] == board[i][1] and board[i][1] == board[i][2]:
             return board[i][0]
-        if board[0][i] == board[1][i] and board[1][i] == board[2][i]:
+        #check the three rows for matching symbols
+        if board[0][i] is not None and board[0][i] == board[1][i] and board[1][i] == board[2][i]:
             return board[0][i]
-        spaces += board[i].count(None)
-    if board[0][0] == board[1][1] and board[1][1] == board[2][2]:
+        spaces += board[i].count(None) # count how many spaces are on this row
+    # check the two diagonals
+    if board[0][0] is not None and board[0][0] == board[1][1] and board[1][1] == board[2][2]:
             return board[0][0]
-    if board[0][2] == board[1][1] and board[1][1] == board[2][0]:
+    if board[0][2] is not None and board[0][2] == board[1][1] and board[1][1] == board[2][0]:
             return board[1][1]
+    # there are no remaining spaces in the board, so it's a draw
     if spaces == 0:
          return 99
     return None
@@ -81,6 +102,7 @@ while True:
     # when the game ends, it repeats
     print("New Game")
     game = GameState()
+    print("A gamestate is", sys.getsizeof(game), "bytes")
     players = [0,1]
     random.shuffle(players) # randomise who gets x or o
     s.listen(2)
