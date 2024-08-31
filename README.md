@@ -11,9 +11,11 @@ The example game uses a library called pygame_functions. This is my own library 
 ## Installation
 
 Your server computer needs to have server.py running. You need to change line 16 to reflect the server computer's IP local address  (Look up how to find this out on your specific operating system - in most cases it involves running ifconfig in a command prompt)
+
 This IP address also needs to be entered into the relevant line of network.py
 
 Each player needs to have network.py, player.py and pygame_functions.py in the same folder.
 
 Fire up server.py on the server computer, then have the players run their player.py
+
 They should communicate with the server, and the server will confirm this with console output.
