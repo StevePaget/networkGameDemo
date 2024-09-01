@@ -106,6 +106,7 @@ while True:
     players = [0,1]
     random.shuffle(players) # randomise who gets x or o
     s.listen(2)
+    
     print("Waiting for a connection, Server Started")
     for i in range(2):
         pnum = players[i]

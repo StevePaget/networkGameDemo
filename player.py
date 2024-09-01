@@ -1,5 +1,4 @@
 from pygame_functions import *
-import random, pickle
 from network import Network
 import threading
 
