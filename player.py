@@ -35,15 +35,22 @@ class Game:
     
     def playGame(self):
         changeLabel(infoLabel,"Waiting for your turn")
-        updateDisplay()
         while self.running:
+            updateDisplay()
             if self.status == 1:
                 self.playerTurn()
+            elif self.status == 8:
+                self.displayBoard()
+                updateDisplay()
+                pause(1000)
+                self.running = False
             elif self.status == -1:
                 print("Shutdown signal received")
                 pygame.quit()
                 sys.exit()
+            
             tick(100)
+        updateDisplay()
 
 
     def displayBoard(self):
@@ -70,7 +77,7 @@ class Game:
             changeLabel(playerLabel, "You are Noughts")
         elif self.thisPlayerNum == 1:
             changeLabel(playerLabel, "You are Crosses")
-        updateDisplay()
+
 
 
     def playerTurn(self):
@@ -126,14 +133,14 @@ class Game:
                 break
             # check the gamestate to see if anyone has won the game (or it's a draw)
             if receivedState.winner is not None:
+                self.board = receivedState.board[:]
                 if receivedState.winner == self.thisPlayerNum:
                     changeLabel(infoLabel, "You win!")
                 elif receivedState.winner == 99:
                     changeLabel(infoLabel, "Bah, draw")
                 else:
                     changeLabel(infoLabel, "You lose!")
-                self.running = False
-                updateDisplay()
+                self.status = 8
                 break
             if self.thisPlayerNum == receivedState.currentPlayerNum:
                 # it's our turn.
@@ -142,7 +149,6 @@ class Game:
                 if self.status == 2:
                     self.board = receivedState.board[:]
                     self.displayBoard()
-                    updateDisplay()
                     self.status = 1 # now start the actual player turn
 
                 elif self.status == 9: # we have finished our move, so send it
@@ -158,7 +164,7 @@ class Game:
             # having possibly made some changes to the received state,
             # send it back to the server
             self.n.send(receivedState)
-            tick(100)
+
 
 while True:
     pause(1000)

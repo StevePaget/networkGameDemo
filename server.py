@@ -13,7 +13,7 @@ class GameState:
         self.winner = None
 
 # wait for connections, send a player number
-server = "192.168.178.23"
+server = "10.164.1.16"
 port = 5555
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
